@@ -1,0 +1,23 @@
+Based on the provided report, the following modalities or themes from McCowan's Five Modalities of the University in Sustainable Development are present:
+
+1. Education: The report mentions the University's mission to make a positive impact through research, education, and management relating to sustainability. It also highlights the University's work in sustainability across various areas, including the Cabot Institute, Bristol Futures, and Library Services.
+
+2. Knowledge production: The report mentions the University's research and scholarship activities, including blue skies research, applied research, innovation, and development of technology.
+
+3. Services: The report mentions various activities that directly serve citizens or support other organizations or communities, such as the provision of hospitals and legal clinics, professional development programs, consultancy, and secondments to government or the private sector.
+
+4. Public debate: The report mentions promoting spaces for deliberation, communication of research findings, and political mobilization.
+
+5. Campus operations: The report refers to the organization of the physical university space, its staff and students, and the impacts they have directly on the ecosphere.
+
+Here is a table summarizing the presence of each modality in the report:
+
+| Modality                 | Present? |
+|--------------------------|----------|
+| Education                | Yes      |
+| Knowledge production     | Yes      |
+| Services                 | Yes      |
+| Public debate            | Yes      |
+| Campus operations        | Yes      |
+
+Overall, all five modalities are present in the report, indicating the University's commitment to sustainable development across various aspects of its operations.
