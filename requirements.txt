@@ -3,3 +3,7 @@ pypdf==3.9
 matplotlib==3.7
 scikit-learn==1.2
 tiktoken==0.4
+pandas==2.0
+openpyxl==3.1
+#beautifulsoup4==4.12
+weaviate-client==3.21

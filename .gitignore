@@ -1,2 +1,5 @@
 pdf_download/*
 !pdf_download/.gitkeep
+
+weaviate_volume/*
+!weaviate_volume/.gitkeep
