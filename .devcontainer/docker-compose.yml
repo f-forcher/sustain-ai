@@ -1,0 +1,86 @@
+---
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+
+    volumes:
+      - ../..:/workspaces:cached
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+
+    # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
+    network_mode: service:weaviate
+
+    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+  
+  weaviate:
+    volumes:
+      - ../weaviate_volume:/var/lib/weaviate
+    command:
+    - --host
+    - 0.0.0.0
+    - --port
+    - '8080'
+    - --scheme
+    - http
+    image: semitechnologies/weaviate:1.19.8
+    ports:
+    - 8080:8080
+    restart: on-failure:0
+    environment:
+      OPENAI_APIKEY: "***REMOVED***"
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'text2vec-openai'
+      ENABLE_MODULES: 'text2vec-openai,generative-openai'
+      CLUSTER_HOSTNAME: 'node1'
+
+#   db:
+#     image: postgres:latest
+#     restart: unless-stopped
+#     volumes:
+#       - postgres-data:/var/lib/postgresql/data
+#     environment:
+#       POSTGRES_USER: postgres
+#       POSTGRES_DB: postgres
+#       POSTGRES_PASSWORD: postgres
+
+#     # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
+#     # (Adding the "ports" property to this file will not forward from a Codespace.)
+
+# volumes:
+#   postgres-data:
+...
+# ---
+# version: '3.4'
+# services:
+#   weaviate:
+#     volumes:
+#       - ./weaviate_volume:/var/lib/weaviate
+#     command:
+#     - --host
+#     - 0.0.0.0
+#     - --port
+#     - '8080'
+#     - --scheme
+#     - http
+#     image: semitechnologies/weaviate:1.19.8
+#     ports:
+#     - 8080:8080
+#     restart: on-failure:0
+#     environment:
+#       OPENAI_APIKEY: "***REMOVED***"
+#       QUERY_DEFAULTS_LIMIT: 25
+#       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+#       PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+#       DEFAULT_VECTORIZER_MODULE: 'text2vec-openai'
+#       ENABLE_MODULES: 'text2vec-openai,generative-openai'
+#       CLUSTER_HOSTNAME: 'node1'
+# ...
