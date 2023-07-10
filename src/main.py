@@ -11,12 +11,12 @@ from langchain.text_splitter import TokenTextSplitter
 openai.api_key = "***REMOVED***"
 
 
-def extract_all_text():
-    reader = PdfReader("./samples/bristol_2021-22.pdf")
-    str_list = []
-    for page in reader.pages:
-        str_list.append(page.extract_text())
-    return ''.join(str_list)
+# def extract_all_text():
+#     reader = PdfReader("./samples/bristol_2021-22.pdf")
+#     str_list = []
+#     for page in reader.pages:
+#         str_list.append(page.extract_text())
+#     return ''.join(str_list)
 
 
 def read_pdf(filepath):
@@ -27,7 +27,7 @@ def read_pdf(filepath):
     page_number = 0
     for page in reader.pages:
         page_number += 1
-        pdf_text += page.extract_text() + f"\n\n Page Number: {page_number} \n\n"
+        pdf_text += page.extract_text() + f"\n\n Page N: {page_number} \n\n"
     return pdf_text
 
 # # Split a text into smaller chunks of size n, preferably ending at the end of a sentence
@@ -98,8 +98,8 @@ def read_pdf(filepath):
 #         i = j
 #         c = c+1
 
-def get_themes(text, model_name = "gpt-3.5-turbo-16k-0613"):
-    report_text = read_pdf("./samples/bristol_2021-22.pdf")
+def get_themes(pdf_name, model_name = "gpt-3.5-turbo-16k-0613"):
+    report_text = read_pdf(pdf_name )
     # enc = tiktoken.encoding_for_model(model_name)
 
     text_splitter = TokenTextSplitter(model_name=model_name,
@@ -115,8 +115,10 @@ def get_themes(text, model_name = "gpt-3.5-turbo-16k-0613"):
         inputs.append(chunk_text)
         role = """You are an incredibly advanced AI for text and sentiment analysis, 
               able to understand all the themes of a text even when expressed more implicitly. Your answers 
-              may be used by an automated system, so when asked to format them to JSON, it is very important 
-              that you only output the syntactically correct format and no other unformatted text."""
+              may be used by an automated system, so *when asked* to format an answer to JSON using the token
+              "JSON_answer:" , it is very important that you only output the syntactically correct 
+              format and no other unformatted text. Otherwise, 
+              you can write out an extensive structured analysis to help explain your reasoning"""
 
         prompt_analyze = f"""
 You are an advanced expert AI specializing in thematic and sentiment analysis. 
@@ -176,40 +178,50 @@ In this category we would also include the travel undertaken by students and sta
 a significant source of carbon emissions: while this might appear to be within the ‘education’ category, 
 it is not strictly a result of the teaching and learning itself, but of the logistical organisation of the 
 institution and its members. For some institutions the goal in terms of campus operations is to become carbon neutral 
-or net zero – which can involve not only reducing emissions, but also offsetting through carbon credits or sequestering carbon. 
+or net zero, which can involve not only reducing emissions, but also offsetting through carbon credits or sequestering carbon. 
 Campus operations can include net zero strategies, investments, waste management, canteen sourcing, sustainable procurement. 
 
 ```
 
 Task 1:
-Can you read and analyse carefully the following chunk of a sustainability report (it was extracted from
-a pdf so be aware that it may be quite noisy)?
-Then tell me which of the five modalities or themes are present in the text. 
-Answer thoroughly and in detail, in a structured form. 
+You should read and analyse carefully the following chunk of text extracted from a sustainability report.
+Then tell which of the five modalities or themes are present in the text. 
+Write out an answer thoroughly and in detail, in a structured form. 
 
 Task 2:
 Another task is to analyze the chunk's sentiment. For our purposes would be sufficient to understand if there is any
 self evaluation at all, and if there is any negative result reported such as missed target. 
 for example missing previously set targets and similar stuff. Find negative or self evaluative statements. 
-Again answer thorougly, provide direct quotes if necessary.
+Again write out an answer thorougly and in a structured way, provide direct quotes if necessary.
 
 Examples: 
 - Self evaluation, negative: “We did not achieve this target, as our water consumption (m3) reduced by 4.3% from our 2005/06 baseline 
-to our target year 2020/21” (University of Campbridge, 2020/2021 report, p. 46). 
+to our target year 2020/21”. 
 
 - Self evaluation, negative: “Unfortunately we did not meet our water reduction target this year however we did achieve a reduction of 1.3% 
-and are looking at ways of improving over the next year” (14). 
+and are looking at ways of improving over the next year”. 
 
 - Self evaluation, negative: “In 2019–20 we recycled 56% of our waste, meaning there remains a challenge to reach the 70% target.” 
 
 - Self evaluation, neutral: “This year 56.4% of our waste was recycled. The recycling rate for operational and construction waste decreased this year. 
-The re-tender of the University’s main waste collection contract has been completed which will increase recycling rates” (5). 
+The re-tender of the University’s main waste collection contract has been completed which will increase recycling rates” . 
 
-After the analysis for the two tasks, create a single-row table with a 
-column for each of the five modality and a yes/no if it is present or not, two columns named 
-"criticism" and "self-evaluation" with a yes/no value if respectively criticism and "self-evaluation" are present or not.
+After the analysis for the two tasks, create a single-row table with eight column: a 
+column for each of the five modality and a true/false if it is present or not, and two columns named 
+"criticism" and "self-evaluation" with a true/false value if respectively criticism and "self-evaluation" are present or not. 
+Last column should be a "validity" check: it may happen that the chunk is too small or does not contain any 
+meaningful information (for example it may be a references page). If you really consider this to be the case, and
+do not believe you can reliably extract any information related to the themes and sentiment, 
+set the validity value and all the others to false.
 
-The hunk:
+Table template:
+```
+| Validity | Education | Knowledge Prod. | Services | Public Debate | Campus Ops | Self-evaluation | Criticism       | 
+|----------|-----------|-----------------|----------|---------------|------------|-----------------|-----------------|
+| BOOL     | BOOL      | BOOL            | BOOL     | BOOL          | BOOL       | BOOL            | BOOL            |
+```
+
+The chunk to analyze:
 ```
 {chunk_text}
 ```
@@ -218,39 +230,54 @@ Your analysis:
 """
 
         promp_format = """
-Now summarize these results and the table in valid JSON format, following this template (without the triple ticks)
+Now summarize these results and the table in JSON format, following this template:
 ```
 {
-    "modalities": {
+    "valid": BOOL
+    "analysis": {
         "education": BOOL, 
         "knowledge_production": BOOL, 
         "services": BOOL, 
         "public_debate": BOOL, 
-        "campus_operations": BOOL
-    },
-    "criticism": {
-        "present": BOOL
+        "campus_operations": BOOL,
+        "self_evaluation": BOOL,
+        "criticism": BOOL
     }
 }
 ```
 
-Example output:
+Example outputs:
 ```
 {
-    "modalities": {
-        "education": True, 
-        "knowledge_production": True, 
-        "services": True, 
-        "public_debate": True, 
-        "campus_operations": True
-    },
-    "criticism": {
-        "present": True
+    "valid": true
+    "analysis": {
+        "education": false, 
+        "knowledge_production": true, 
+        "services": true, 
+        "public_debate": false, 
+        "campus_operations": true,
+        "self_evaluation": true,
+        "criticism": true
+    }
+}
+
+{
+    "valid": false
+    "analysis": {
+        "education": false, 
+        "knowledge_production": false, 
+        "services": false, 
+        "public_debate": false, 
+        "campus_operations": false,
+        "self_evaluation": false,
+        "criticism": false
     }
 }
 ```
 
-You must output JUST the json and nothing else.
+You _must_ output JUST the json and nothing else.
+
+JSON_answer:
         """
         # print(chunk_text, sys.stderr)
         response = openai.ChatCompletion.create(
@@ -285,12 +312,14 @@ You must output JUST the json and nothing else.
 
 def run():
     # report_link = "https://www.bristol.ac.uk/media-library/sites/green/UoB_SustainabilityReport_2122_FINAL.pdf"
-    pdf_text = extract_all_text()
-    (answers_analyze, answers_json, inputs) = get_themes(pdf_text, model_name="gpt-4")
+    model_name = "gpt-4"
+    #model_name = "gpt-3.5-turbo-16k-0613"
+    (answers_analyze, answers_json, inputs) = get_themes(pdf_name="./samples/bristol_2021-22.pdf", model_name=model_name)
     print(answers_json)
     timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f"))
-    filename = f"outputs/out-{timestamp}.txt"
+    filename = f"outputs/out-{timestamp}-{model_name}.txt"
     with open(filename, "a") as text_file:
+        print(f"\n[INFO] Model name: {model_name}\n", file=text_file)
         for i, js in enumerate(answers_json):
             print(f"\n[INFO] Chunk {i}:\n", file=text_file)
             print(f"\n[INFO] Chunk {i}, text:\n", file=text_file)

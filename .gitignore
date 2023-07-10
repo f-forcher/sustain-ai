@@ -3,3 +3,6 @@ pdf_download/*
 
 weaviate_volume/*
 #!weaviate_volume/.gitkeep
+
+outputs/*
+!outputs/.gitkeep
