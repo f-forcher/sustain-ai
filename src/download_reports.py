@@ -59,6 +59,10 @@ def read_links_table(xls_table):
 
 def run():
     links_df = read_links_table("./reports_links.xlsx")
+    links_normalized = links_df
+    links_normalized["HEI_names_norm"] = get_normalized_uni_names(links_df)
+    links_normalized.set_index("HEI_names_norm", inplace=True)
+    links_normalized.to_csv("./reports_norm.csv")
     create_files_in_dir(links_df)
     
 

@@ -316,7 +316,8 @@ def run():
     #model_name = "gpt-3.5-turbo-16k-0613"
     (answers_analyze, answers_json, inputs) = get_themes(pdf_name="./samples/bristol_2021-22.pdf", model_name=model_name)
     print(answers_json)
-    timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f"))
+    #timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f"))
+    timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
     filename = f"outputs/out-{timestamp}-{model_name}.txt"
     with open(filename, "a") as text_file:
         print(f"\n[INFO] Model name: {model_name}\n", file=text_file)
