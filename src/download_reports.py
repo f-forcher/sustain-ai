@@ -54,7 +54,7 @@ def create_files_in_dir(links_df ):
 
 
 def read_links_table(xls_table):
-    df = pd.read_excel(xls_table, index_col=0).fillna("")
+    df = pd.read_excel(xls_table, index_col=0).fillna("").applymap(lambda s: s.strip())
     return df
 
 def run():

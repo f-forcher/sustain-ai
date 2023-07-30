@@ -113,12 +113,13 @@ def get_themes(pdf_name, model_name = "gpt-3.5-turbo-16k-0613"):
     #   chunk_text = enc.decode(chunk_enc)
     for chunk_text in texts:
         inputs.append(chunk_text)
-        role = """You are an incredibly advanced AI for text and sentiment analysis, 
-              able to understand all the themes of a text even when expressed more implicitly. Your answers 
-              may be used by an automated system, so *when asked* to format an answer to JSON using the token
-              "JSON_answer:" , it is very important that you only output the syntactically correct 
-              format and no other unformatted text. Otherwise, 
-              you can write out an extensive structured analysis to help explain your reasoning"""
+        role = """
+You are an incredibly advanced AI for text and sentiment analysis, 
+able to understand all the themes of a text even when expressed more implicitly. Your answers 
+may be used by an automated system, so *when asked* to format an answer to JSON using the token
+"JSON_answer:" , it is very important that you only output the syntactically correct 
+format and no other unformatted text. Otherwise, 
+you can write out an extensive structured analysis to help explain your reasoning"""
 
         prompt_analyze = f"""
 You are an advanced expert AI specializing in thematic and sentiment analysis. 
@@ -142,7 +143,7 @@ its staff and students, and the impacts that they have directly on the ecosphere
 Some more details: 
 1) Education (personal development and personal civic learning). It considers inclusion of sustainability into curriculum, 
 personal development and education for civic engagement. Quote from McCowan: 
-"[...] education refers to the role of the university as a space for learning, and for personal, civic and professional development."
+"education refers to the role of the university as a space for learning, and for personal, civic and professional development."
 
 2) Knowledge Production (basic research, technological innovation). 
 Knowledge production implies generation of knowledge, and normally arises from research and scholarship 
@@ -312,8 +313,8 @@ JSON_answer:
 
 def run():
     # report_link = "https://www.bristol.ac.uk/media-library/sites/green/UoB_SustainabilityReport_2122_FINAL.pdf"
-    model_name = "gpt-4"
-    #model_name = "gpt-3.5-turbo-16k-0613"
+    # model_name = "gpt-4"
+    model_name = "gpt-3.5-turbo-16k-0613"
     (answers_analyze, answers_json, inputs) = get_themes(pdf_name="./samples/bristol_2021-22.pdf", model_name=model_name)
     print(answers_json)
     #timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f"))
