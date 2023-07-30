@@ -308,8 +308,8 @@ def run():
     # report_link = "https://www.bristol.ac.uk/media-library/sites/green/UoB_SustainabilityReport_2122_FINAL.pdf"
     # model_name = "gpt-4"
     
-    #Get only first 5 for now
-    links_normalized = pd.read_csv("./reports_norm.csv", index_col=["HEI_names_norm"]).tail(n=3)
+
+    links_normalized = pd.read_csv("./reports_norm.csv", index_col=["HEI_names_norm"])
     
     print(links_normalized)
     
@@ -331,11 +331,11 @@ def run():
             if answers_dict_flat is None:
                 continue
             print(answers_dict_flat)
-            new_data = pd.DataFrame.from_records(answers_dict_flat).set_index(["uni" ,"year", "chunk", "version", "timestamp"])
+            new_data = pd.DataFrame.from_records(answers_dict_flat).set_index(["uni" ,"year", "chunk", "version", "timestamp", "model_name"])
             
             old_data = None
             if os.path.exists("results.csv"):
-                old_data = pd.read_csv("results.csv", index_col=["uni" ,"year", "chunk", "version", "timestamp"])
+                old_data = pd.read_csv("results.csv", index_col=["uni" ,"year", "chunk", "version", "timestamp", "model_name"])
             if old_data is not None:
                 data = pd.concat([old_data,new_data], verify_integrity=True)
             else:
