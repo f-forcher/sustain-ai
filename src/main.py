@@ -1,9 +1,12 @@
 from pypdf import PdfReader
 import datetime
 import openai
+import os
 import sys
 import tiktoken
 import pandas as pd
+import json
+import glob
 #from langchain.text_splitter import CharacterTextSplitter
 from langchain.text_splitter import TokenTextSplitter
 #from text_splitter_mod import TokenTextSplitter
@@ -30,76 +33,8 @@ def read_pdf(filepath):
         pdf_text += page.extract_text() + f"\n\n Page N: {page_number} \n\n"
     return pdf_text
 
-# # Split a text into smaller chunks of size n, preferably ending at the end of a sentence
-# def create_chunks(text, n, tokenizer):
-#     """Returns successive n-sized chunks from provided text."""
-#     tokens = tokenizer.encode(text)
-#     i = 0
-#     while i < len(tokens):
-#         # Find the nearest end of sentence within a range of 0.5 * n and 1.5 * n tokens
-#         j = min(i + int(1.5 * n), len(tokens))
-#         while j > i + int(0.5 * n):
-#             # Decode the tokens and check for full stop or newline
-#             chunk = tokenizer.decode(tokens[i:j])
-#             if chunk.endswith(".") or chunk.endswith("\n"):
-#                 break
-#             j -= 1
-#         # If no end of sentence found, use n tokens as the chunk size
-#         if j == i + int(0.5 * n):
-#             j = min(i + n, len(tokens))
-#         yield tokens[i:j]
-#         i = j
-
-# # Split a text into smaller chunks of size n, preferably ending at the end of a sentence
-# def create_chunks_with_overlap(text, n, tokenizer, overlap_ratio=0.1):
-#     """Returns successive n-sized chunks from provided text."""
-#     tokens = tokenizer.encode(text)
-#     i = 0
-#     c = 0
-#     while i < len(tokens):
-#         # Find the nearest end of sentence within a range of 0.5 * n and 1.5 * n tokens
-#         j = min(i + int(1.5 * n), len(tokens))
-#         while j > i + int(0.5 * n):
-#             # Decode the tokens and check for full stop or newline
-#             chunk = tokenizer.decode(tokens[i:j])
-#             if chunk.endswith(".") or chunk.endswith("\n"):
-#                 break
-#             j -= 1
-#         # If no end of sentence found, use n tokens as the chunk size
-#         if j == i + int(0.5 * n):
-#             j = min(i + n, len(tokens))
-#         print(f"c: {c}, i: {i}, int(overlap_ratio * (j - i)): {int(overlap_ratio * (j - i))}, {(max(0, i - int(overlap_ratio * (j - i))))}:{j} ", sys.stderr)
-#         yield tokens[(max(0, i - int(overlap_ratio * (j - i)))):j]
-#         # Start next chunk after going back overlap_ratio * chunk_length tokens
-#         i = j
-#         c = c+1
-
-# # Split a text into smaller chunks of size n, preferably ending at the end of a sentence
-# def my_create_chunks_with_overlap(text, n, tokenizer, overlap_ratio=0.1):
-#     """Returns successive n-sized chunks from provided text."""
-#     tokens = tokenizer.encode(text)
-#     i = 0
-#     c = 0
-#     while i < len(tokens):
-#         # Find the nearest end of sentence within a range of 0.5 * n and 1.5 * n tokens
-#         j = min(i + int(1.5 * n), len(tokens))
-#         while j > i + int(0.5 * n):
-#             # Decode the tokens and check for full stop or newline
-#             chunk = tokenizer.decode(tokens[i:j])
-#             if chunk.endswith(".") or chunk.endswith("\n"):
-#                 break
-#             j -= 1
-#         # If no end of sentence found, use n tokens as the chunk size
-#         if j == i + int(0.5 * n):
-#             j = min(i + n, len(tokens))
-#         print(f"c: {c}, i: {i}, int(overlap_ratio * (j - i)): {int(overlap_ratio * (j - i))}, {(max(0, i - int(overlap_ratio * (j - i))))}:{j} ", sys.stderr)
-#         yield tokens[(max(0, i - int(overlap_ratio * (j - i)))):j]
-#         # Start next chunk after going back overlap_ratio * chunk_length tokens
-#         i = j
-#         c = c+1
-
-def get_themes(pdf_name, model_name = "gpt-3.5-turbo-16k-0613"):
-    report_text = read_pdf(pdf_name )
+def get_themes(pdf_file_path, model_name = "gpt-3.5-turbo-16k-0613"):
+    report_text = read_pdf(pdf_file_path)
     # enc = tiktoken.encoding_for_model(model_name)
 
     text_splitter = TokenTextSplitter(model_name=model_name,
@@ -310,18 +245,52 @@ JSON_answer:
         
     return (answers_analyze, answers_json, inputs)
 
+def flatten_json(json_response, uni, year, chunk, version=0, timestamp="NULL", model_name="NULL"):
+    dict_response = json.loads(json_response)
+    # Create a new dictionary with the 'uni', 'year', and 'chunk' keys
+    flat_dict = {
+        "uni":     uni,
+        "year":    year,
+        "chunk":   chunk,
+        "version": version,
+        "timestamp": timestamp,
+        "model_name": model_name,
+    }
 
-def run():
-    # report_link = "https://www.bristol.ac.uk/media-library/sites/green/UoB_SustainabilityReport_2122_FINAL.pdf"
-    # model_name = "gpt-4"
-    model_name = "gpt-3.5-turbo-16k-0613"
-    (answers_analyze, answers_json, inputs) = get_themes(pdf_name="./samples/bristol_2021-22.pdf", model_name=model_name)
+    # Add the 'valid' key and value to the new dictionary
+    flat_dict["valid"] = dict_response["valid"]
+
+    # Add the keys and values from the 'analysis' dictionary to the new dictionary
+    for key, value in dict_response["analysis"].items():
+        flat_dict[key] = value
+
+    return flat_dict
+
+def analyze_one_report(uni, year, model_name="gpt-3.5-turbo-16k-0613"):
+    pdf_file_path = f"./pdf_download/{uni}/{year}.pdf"
+    if not os.path.exists(pdf_file_path):
+        sys.stderr.write(f"The file {pdf_file_path} does not exists.\n")
+        return
+    (answers_analyze, answers_json, inputs) = get_themes(pdf_file_path=pdf_file_path, model_name=model_name)
     print(answers_json)
+    
+    dir_name = f"./outputs/analyses/{model_name}/{uni}/{year}"
+    try:
+        os.makedirs(dir_name, exist_ok=True)
+        # print(f"Directory {dir_name} created.", sys.stderr)
+    except OSError as error:
+        sys.stderr.write(f"Error creating directory {dir_name}: {error}\n")
+    
     #timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f"))
     timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
-    filename = f"outputs/out-{timestamp}-{model_name}.txt"
+    filename = f"{dir_name}/out-{timestamp}.txt"
+    
+    # version is the number of out files already existing in the target folder
+    version = len(glob.glob(f"{dir_name}/*.txt"))
     with open(filename, "a") as text_file:
         print(f"\n[INFO] Model name: {model_name}\n", file=text_file)
+        print(f"\n[INFO] Pdf file name: {pdf_file_path}\n", file=text_file)
+        print(f"\n[INFO] timestamp: {timestamp}\n", file=text_file)
         for i, js in enumerate(answers_json):
             print(f"\n[INFO] Chunk {i}:\n", file=text_file)
             print(f"\n[INFO] Chunk {i}, text:\n", file=text_file)
@@ -330,8 +299,48 @@ def run():
             print(answers_analyze[i], file=text_file)
             print(f"\n[INFO] Chunk {i}, json output:\n", file=text_file)
             print(js, file=text_file)
-    pass
+    
+    answers_dict_flat = [flatten_json(answer.strip(), uni, year, chunk, version, timestamp, model_name) for chunk, answer in enumerate(answers_json)]
+    
+    return answers_dict_flat
 
+def run():
+    # report_link = "https://www.bristol.ac.uk/media-library/sites/green/UoB_SustainabilityReport_2122_FINAL.pdf"
+    # model_name = "gpt-4"
+    
+    #Get only first 5 for now
+    links_normalized = pd.read_csv("./reports_norm.csv", index_col=["HEI_names_norm"]).tail(n=3)
+    
+    print(links_normalized)
+    
+    unis = links_normalized.index.to_list()
+    years = links_normalized.columns.to_list()
+    model_name = "gpt-3.5-turbo-16k-0613"
+    
+    print(unis)
+    print(years)
+    
+    for uni in unis:
+        for year in years:
+            sys.stderr.write(f"Analyzing report for {uni} year {year}\n")
+            if pd.isna(links_normalized.loc[uni,year]):
+                sys.stderr.write(f"Report for {uni} year {year} not present, skipping\n")
+                continue
+            
+            answers_dict_flat = analyze_one_report(uni, year, model_name=model_name)
+            if answers_dict_flat is None:
+                continue
+            print(answers_dict_flat)
+            new_data = pd.DataFrame.from_records(answers_dict_flat).set_index(["uni" ,"year", "chunk", "version", "timestamp"])
+            
+            old_data = None
+            if os.path.exists("results.csv"):
+                old_data = pd.read_csv("results.csv", index_col=["uni" ,"year", "chunk", "version", "timestamp"])
+            if old_data is not None:
+                data = pd.concat([old_data,new_data], verify_integrity=True)
+            else:
+                data = new_data
+            data.to_csv("results.csv")
 
 if __name__ == "__main__":
     run()

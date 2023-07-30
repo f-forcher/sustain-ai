@@ -7,7 +7,7 @@ def get_link_pdf(uni_idx, year, links_df):
     link = links_df.loc[uni_idx, year]
     if link == "":
         return None
-    if link[-4:] != ".pdf":
+    if link[-3:] != "pdf":
         print(f"[WARN] Link {link} is not a pdf, skipping", sys.stderr)
         return None
     return link
@@ -64,7 +64,7 @@ def run():
     links_normalized.set_index("HEI_names_norm", inplace=True)
     links_normalized.to_csv("./reports_norm.csv")
     create_files_in_dir(links_df)
-    
+
 
 if __name__ == "__main__":
     run()
