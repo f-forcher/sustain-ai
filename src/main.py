@@ -20,7 +20,7 @@ from tenacity import (
 
 openai.api_key = "***REMOVED***"
  
-@retry(wait=wait_random_exponential(min=2, max=90), stop=stop_after_attempt(10))
+@retry(wait=wait_random_exponential(min=2, max=120), stop=stop_after_attempt(15))
 def chat_backoff(**kwargs):
     return openai.ChatCompletion.create(**kwargs)
 
@@ -322,14 +322,15 @@ def run():
     # model_name = "gpt-4"
     
 
-    links_normalized = pd.read_csv("./reports_norm.csv", index_col=["HEI_names_norm"]).tail(15)
+    links_normalized = pd.read_csv("./reports_norm.csv", index_col=["HEI_names_norm"])
     
     print(links_normalized)
     
     unis = links_normalized.index.to_list()
     years = links_normalized.columns.to_list()
     #model_name = "gpt-3.5-turbo-16k-0613"
-    model_name = "gpt-3.5-turbo-16k"
+    #model_name = "gpt-3.5-turbo-16k"
+    model_name = "gpt-4"
     
     print(unis)
     print(years)
