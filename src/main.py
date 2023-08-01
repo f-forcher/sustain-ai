@@ -11,7 +11,20 @@ import glob
 from langchain.text_splitter import TokenTextSplitter
 #from text_splitter_mod import TokenTextSplitter
 
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_random_exponential,
+)  # for exponential backoff
+
+
 openai.api_key = "***REMOVED***"
+ 
+@retry(wait=wait_random_exponential(min=2, max=90), stop=stop_after_attempt(10))
+def chat_backoff(**kwargs):
+    return openai.ChatCompletion.create(**kwargs)
+
+
 
 
 # def extract_all_text():
@@ -216,7 +229,7 @@ You _must_ output JUST the json and nothing else.
 JSON_answer:
         """
         # print(chunk_text, sys.stderr)
-        response = openai.ChatCompletion.create(
+        response = chat_backoff(
             model=model_name,
             messages=[
                 {"role": "system", "content": role},
@@ -229,7 +242,7 @@ JSON_answer:
         answers_analyze.append(response_analyze_text)
         
         # print(chunk_text, sys.stderr)
-        response_json = openai.ChatCompletion.create(
+        response_json = chat_backoff(
             model=model_name,
             messages=[
                 {"role": "system", "content": role},
@@ -309,13 +322,14 @@ def run():
     # model_name = "gpt-4"
     
 
-    links_normalized = pd.read_csv("./reports_norm.csv", index_col=["HEI_names_norm"])
+    links_normalized = pd.read_csv("./reports_norm.csv", index_col=["HEI_names_norm"]).tail(15)
     
     print(links_normalized)
     
     unis = links_normalized.index.to_list()
     years = links_normalized.columns.to_list()
-    model_name = "gpt-3.5-turbo-16k-0613"
+    #model_name = "gpt-3.5-turbo-16k-0613"
+    model_name = "gpt-3.5-turbo-16k"
     
     print(unis)
     print(years)
